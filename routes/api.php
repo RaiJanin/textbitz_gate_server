@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\LinkController;
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Api\NotificationPreferenceController;
 use App\Http\Controllers\Api\StudentController;
+use App\Http\Controllers\Api\GatesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
 
     Route::get('/me', [MeController::class, 'show']);
+    Route::get('/gates', [GatesController::class, 'index']);
 
     Route::get('/students/{student}/status', [StudentController::class, 'status'])->can('view', 'student');
     Route::get('/students/{student}/history', [StudentController::class, 'history'])->can('view', 'student');
