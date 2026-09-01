@@ -329,7 +329,10 @@ The client is a full Laravel app on the device, so it keeps working without netw
 - Login is offline-tolerant: if the server is unreachable, the credential is cached
   and the Sanctum token is bridged on the next reconnect.
 
-Requires `php artisan queue:work` + `schedule:work` running on the device.
+On **desktop/dev** this needs `php artisan queue:work` + `schedule:work`. On a
+**device** there are no daemons — the `djurovicigoor/app-lifecycle` plugin runs
+the same work on every app foreground (`RunMobileWorkers`) and flushes pending
+writes on background (`FlushOnBackground`), synchronously.
 
 ---
 
