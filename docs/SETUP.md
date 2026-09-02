@@ -247,8 +247,18 @@ php artisan migrate --seed          # schema + demo data when APP_DEMO_MODE=true
 | `REVERB_APP_ID` / `_KEY` / `_SECRET` / `_HOST` / `_PORT` | (set) | **Must match the server's Reverb app** |
 | `VITE_REVERB_*` | mirror of the above | Passed to the browser bundle |
 | `APP_DEMO_MODE` / `VITE_APP_DEMO_MODE` | `true` | Runs `DemoSeeder`, shows the login-hint box |
-| `FCM_ENABLED` / `FCM_SENDER_ID` | `false` / empty | Device-token registration (needs the paid `nativephp/mobile-firebase` plugin) |
 | `NATIVEPHP_APP_ID` | `com.rightapps.textbitzgate` | Android bundle id |
+
+**Notifications.** FCM is the primary push path (reaches a backgrounded/killed
+app). It's scaffolded but off until you install the paid `nativephp/mobile-firebase`
+plugin, drop `google-services.json` in the app root, uncomment the provider in
+`NativeServiceProvider::plugins()`, and set `FCM_ENABLED=true` + credentials on the
+**server**. Client wiring is done: `usePushNotifications.js` / `usePushPriming.js`,
+the `EnrollPushNotifications` middleware, the `RegisterPushToken` listener, and
+`POST /api/device-tokens`. Until FCM is on, `useLocalNotifications.js` is the
+fallback — Web Notifications API (+ service worker) or a native toast/vibrate,
+raised on-device from Reverb events and the pull sync (works only while the app
+is alive).
 
 ---
 

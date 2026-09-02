@@ -36,11 +36,13 @@ return [
     ],
 
     'fcm' => [
-        // Background push via Firebase Cloud Messaging. Left disabled until a
+        // Background push via Firebase Cloud Messaging. Disabled until a
         // service-account JSON key is dropped in and FCM_ENABLED=true.
+        // `FIREBASE_CREDENTIALS` matches the client's fatlum/nativephp-push
+        // convention; `FCM_CREDENTIALS` is still accepted.
         'enabled' => env('FCM_ENABLED', false),
         'project_id' => env('FCM_PROJECT_ID'),
-        'credentials' => env('FCM_CREDENTIALS'),
+        'credentials' => env('FIREBASE_CREDENTIALS', env('FCM_CREDENTIALS')),
     ],
 
 ];
