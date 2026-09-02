@@ -2,6 +2,7 @@
 
 namespace App\Services\Push;
 
+use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,14 +12,14 @@ use RuntimeException;
  * Firebase Cloud Messaging HTTP v1 sender.
  *
  * Only used when config('services.fcm.enabled') is true and a service-account
- * JSON key is configured at config('services.fcm.credentials'). Kept dependency
- * free: the OAuth2 bearer token is minted from the service account with a
- * self-signed RS256 JWT rather than pulling in google/auth.
+ * JSON key is configured at config('services.fcm.credentials'). The OAuth2
+ * bearer token is minted with google/auth's ServiceAccountCredentials — the
+ * same mechanism the client's fatlum/nativephp-push FcmSender uses — so the
+ * token exchange, clock-skew handling and retries are Google's, not ours.
  */
 class FcmHttpV1Sender implements PushSender
 {
     private const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
-    private const TOKEN_URI = 'https://oauth2.googleapis.com/token';
 
     public function send(array $tokens, string $title, string $body, array $data = []): array
     {
@@ -27,6 +28,11 @@ class FcmHttpV1Sender implements PushSender
         }
 
         $projectId = config('services.fcm.project_id');
+
+        if (empty($projectId)) {
+            throw new RuntimeException('services.fcm.project_id (FCM_PROJECT_ID) is not configured.');
+        }
+
         $accessToken = $this->accessToken();
         $endpoint = "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send";
 
@@ -42,6 +48,7 @@ class FcmHttpV1Sender implements PushSender
                         'notification' => ['title' => $title, 'body' => $body],
                         'data' => $stringData,
                         'android' => ['priority' => 'high'],
+                        'apns' => ['payload' => ['aps' => ['sound' => 'default']]],
                     ],
                 ]);
 
@@ -65,47 +72,29 @@ class FcmHttpV1Sender implements PushSender
         return $unregistered;
     }
 
+    /**
+     * FCM v1 access token, cached just short of its hour-long lifetime so a busy
+     * queue worker isn't re-signing a JWT on every job.
+     */
     private function accessToken(): string
     {
         return Cache::remember('fcm:access_token', now()->addMinutes(50), function () {
-            $credentialsPath = config('services.fcm.credentials');
+            $configured = (string) config('services.fcm.credentials');
 
-            if (! $credentialsPath || ! is_file($credentialsPath)) {
-                throw new RuntimeException('FCM credentials file not found at: '.$credentialsPath);
+            // Accept an absolute path (Docker: /app/credentials/...) or one
+            // relative to the project root (local dev).
+            $credentialsPath = is_file($configured)
+                ? $configured
+                : base_path($configured);
+
+            if ($configured === '' || ! is_file($credentialsPath)) {
+                throw new RuntimeException('FCM credentials file not found at: '.($configured ?: '(unset)'));
             }
 
-            /** @var array{client_email: string, private_key: string, token_uri?: string} $sa */
-            $sa = json_decode((string) file_get_contents($credentialsPath), true, 512, JSON_THROW_ON_ERROR);
+            $token = (new ServiceAccountCredentials(self::SCOPE, $credentialsPath))->fetchAuthToken();
 
-            $now = time();
-            $claims = [
-                'iss' => $sa['client_email'],
-                'scope' => self::SCOPE,
-                'aud' => $sa['token_uri'] ?? self::TOKEN_URI,
-                'iat' => $now,
-                'exp' => $now + 3600,
-            ];
-
-            $segments = [
-                $this->base64Url(json_encode(['alg' => 'RS256', 'typ' => 'JWT'], JSON_THROW_ON_ERROR)),
-                $this->base64Url(json_encode($claims, JSON_THROW_ON_ERROR)),
-            ];
-
-            $signature = '';
-            openssl_sign(implode('.', $segments), $signature, $sa['private_key'], OPENSSL_ALGO_SHA256);
-            $segments[] = $this->base64Url($signature);
-
-            $response = Http::asForm()->post($sa['token_uri'] ?? self::TOKEN_URI, [
-                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                'assertion' => implode('.', $segments),
-            ])->throw();
-
-            return (string) $response->json('access_token');
+            return $token['access_token']
+                ?? throw new RuntimeException('google/auth returned no access_token for the FCM service account.');
         });
-    }
-
-    private function base64Url(string $value): string
-    {
-        return rtrim(strtr(base64_encode($value), '+/', '-_'), '=');
     }
 }
