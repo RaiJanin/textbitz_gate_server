@@ -34,6 +34,26 @@ class DatabaseSeeder extends Seeder
         $mainGate = Gate::create(['school_id' => $school->id, 'name' => 'Main Gate']);
         Gate::create(['school_id' => $school->id, 'name' => 'Side Gate']);
 
+        // Admin-panel logins (both password "password"): a super-admin that sees
+        // every school, and one scoped to this school only. `is_admin` is guarded,
+        // so it's force-filled rather than mass-assigned.
+        tap(User::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@textbitzgate.test',
+            'phone_number' => '+639170000900',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+        ]), fn (User $u) => $u->forceFill(['is_admin' => true])->save());
+
+        tap(User::create([
+            'name' => 'Sampaguita Office',
+            'email' => 'office-admin@textbitzgate.test',
+            'phone_number' => '+639170000901',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+            'school_id' => $school->id,
+        ]), fn (User $u) => $u->forceFill(['is_admin' => true])->save());
+
         $students = collect([
             ['full_name' => 'Diana Reyes', 'grade' => '9', 'section' => 'Rizal', 'rfid_uid' => 'RFID-DIANA-01'],
             ['full_name' => 'Marco Reyes', 'grade' => '11', 'section' => 'Mabini', 'rfid_uid' => 'RFID-MARCO-01'],

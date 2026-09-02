@@ -1,10 +1,20 @@
 <?php
 
+use App\Http\Controllers\Admin\LinkCodeSlipController;
 use App\Http\Controllers\SimulatorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+/*
+| Printable guardian link-code slips, opened from the Filament admin panel.
+| Auth + admin check live in the controller.
+*/
+Route::middleware(['web', 'auth'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('link-codes/slips', [LinkCodeSlipController::class, 'batch'])->name('link-codes.slips');
+    Route::get('link-codes/{linkCode}/slip', [LinkCodeSlipController::class, 'show'])->name('link-codes.slip');
 });
 
 /*

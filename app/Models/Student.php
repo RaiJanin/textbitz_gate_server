@@ -34,6 +34,19 @@ class Student extends Model
             ->withTimestamps();
     }
 
+    public function linkCodes(): HasMany
+    {
+        return $this->hasMany(LinkCode::class);
+    }
+
+    /**
+     * The one code currently redeemable for this student, if any.
+     */
+    public function activeLinkCode(): ?LinkCode
+    {
+        return $this->linkCodes()->usable()->latest('id')->first();
+    }
+
     public function studentAccount(): HasOne
     {
         return $this->hasOne(StudentAccount::class);
