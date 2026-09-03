@@ -23,7 +23,13 @@ class SimulatorController extends Controller
 {
     public function index(Request $request, DayRecordBuilder $dayRecords, AlertBuilder $alerts)
     {
-        $schools = School::with(['gates', 'students'])->get();
+        // Newest students first so anything added in the admin panel is right at
+        // the top of the picker (and the default) without hunting for it.
+        $schools = School::with([
+            'gates' => fn ($query) => $query->orderBy('name'),
+            'students' => fn ($query) => $query->orderByDesc('id'),
+        ])->get();
+
         $school = $request->query('school')
             ? $schools->firstWhere('id', (int) $request->query('school'))
             : $schools->first();

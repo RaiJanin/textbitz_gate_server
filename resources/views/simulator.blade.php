@@ -75,7 +75,7 @@
             </select>
         </div>
         <div>
-            <label>Student (for the tables below)</label>
+            <label>Student ({{ $school->students->count() }}) — newest first</label>
             <select name="student" onchange="this.form.submit()">
                 @foreach ($school->students as $st)
                     <option value="{{ $st->id }}" @selected($student && $st->id === $student->id)>
