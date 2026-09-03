@@ -7,13 +7,15 @@ use App\Models\NotificationPreference;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
- * Keeps a client-app account (App\Models\User) and its Guardian profile in sync,
- * whichever side is created first:
+ * Keeps a client-app account (App\Models\User) and its Guardian profile paired.
+ * `guardians.user_id` is NOT NULL, so every guardian points at a user:
  *
- *  - App sign-up / any new User  → ensureGuardianFor()  makes the Guardian.
- *  - Admin-created Guardian       → ensureUserFor()      makes the User login.
+ *  - App sign-up / any new User        → ensureGuardianFor()  makes the Guardian.
+ *  - Admin-created (or programmatic)    → linkUser() runs on `creating` and sets
+ *    Guardian                            `user_id` before the row is inserted.
  *
  * A re-entrancy latch stops the two observers from ping-ponging.
  */
@@ -39,40 +41,44 @@ class GuardianAccount
             ],
         ));
 
-        $user->notificationPreferences()->firstOrCreate(
-            ['role' => NotificationPreference::ROLE_GUARDIAN],
-            ['arrival' => true, 'departure' => true, 'late_alert' => true, 'weekly_summary' => true],
-        );
+        self::ensurePreferences($user);
 
         return $guardian;
     }
 
     /**
-     * Ensure the given guardian has a client-app login. If a user already exists
-     * for the guardian's phone it is linked rather than duplicated; otherwise a
-     * new one is created (password from the form, or a generated one exposed via
-     * self::$lastGeneratedPassword).
+     * Resolve the client-app account for a guardian that is being created and set
+     * its `user_id` in memory (so the pending INSERT satisfies the NOT NULL
+     * column). Creates the login when the mobile number is new; links to it when
+     * the number already exists but has no guardian yet.
+     *
+     * @throws RuntimeException when the guardian can't be paired with a user.
      */
-    public static function ensureUserFor(Guardian $guardian): ?User
+    public static function linkUser(Guardian $guardian): void
     {
         if ($guardian->user_id) {
-            return $guardian->user;
+            return;
         }
 
-        if (blank($guardian->phone)) {
-            return null; // no phone ⇒ can't create a login yet
+        $phone = trim((string) $guardian->phone);
+
+        if ($phone === '') {
+            throw new RuntimeException('A guardian needs a mobile number to be paired with an app account.');
         }
 
         self::$lastGeneratedPassword = null;
 
-        $existing = User::where('phone_number', $guardian->phone)->first();
+        $existing = User::where('phone_number', $phone)->first();
 
         if ($existing) {
-            // That phone already has a client account (and therefore its own
-            // guardian profile). This new row is a duplicate — drop it.
-            $guardian->deleteQuietly();
+            if ($existing->guardian()->exists()) {
+                throw new RuntimeException('That mobile number already has a guardian account.');
+            }
 
-            return $existing;
+            $guardian->user_id = $existing->id;
+            self::ensurePreferences($existing);
+
+            return;
         }
 
         $provided = $guardian->pullPlainPassword();
@@ -82,18 +88,20 @@ class GuardianAccount
         $user = self::withoutSync(fn () => User::create([
             'name' => $guardian->name,
             'email' => $guardian->email,
-            'phone_number' => $guardian->phone,
+            'phone_number' => $phone,
             'password' => Hash::make($plain),
         ]));
 
-        $guardian->forceFill(['user_id' => $user->id])->saveQuietly();
+        $guardian->user_id = $user->id;
+        self::ensurePreferences($user);
+    }
 
+    protected static function ensurePreferences(User $user): void
+    {
         $user->notificationPreferences()->firstOrCreate(
             ['role' => NotificationPreference::ROLE_GUARDIAN],
             ['arrival' => true, 'departure' => true, 'late_alert' => true, 'weekly_summary' => true],
         );
-
-        return $user;
     }
 
     public static function isSyncing(): bool

@@ -8,15 +8,17 @@ use App\Support\GuardianAccount;
 class GuardianObserver
 {
     /**
-     * A Guardian created by an admin (no linked user, but with a phone) is given
-     * a client-app login so the guardian can sign in on the mobile app.
+     * `guardians.user_id` is NOT NULL, so a guardian created without one (admin
+     * panel, tinker, …) is paired with a client-app account *before* it's saved:
+     * a new login is minted for a new mobile number, or an existing account is
+     * linked. Throws if it can't be paired.
      */
-    public function created(Guardian $guardian): void
+    public function creating(Guardian $guardian): void
     {
-        if (GuardianAccount::isSyncing()) {
+        if (GuardianAccount::isSyncing() || $guardian->user_id) {
             return;
         }
 
-        GuardianAccount::ensureUserFor($guardian);
+        GuardianAccount::linkUser($guardian);
     }
 }

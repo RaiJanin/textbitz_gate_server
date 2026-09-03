@@ -284,13 +284,28 @@ describe('guardian ↔ client-account sync', function () {
         expect($guardian->fresh()->name)->toBe('Renamed');
     });
 
-    it('drops a programmatically-created duplicate guardian for an existing account', function () {
-        $existing = User::factory()->create(['phone_number' => '+639172226666']);
+    it('refuses a programmatic duplicate guardian for an existing account', function () {
+        User::factory()->create(['phone_number' => '+639172226666']); // already has a guardian
 
-        $dupe = Guardian::create(['name' => 'Reuse', 'phone' => '+639172226666']);
+        expect(fn () => Guardian::create(['name' => 'Reuse', 'phone' => '+639172226666']))
+            ->toThrow(RuntimeException::class);
 
-        expect(Guardian::find($dupe->id))->toBeNull()
-            ->and($existing->fresh()->guardian)->not->toBeNull()
+        expect(Guardian::where('phone', '+639172226666')->count())->toBe(1)
             ->and(User::where('phone_number', '+639172226666')->count())->toBe(1);
+    });
+
+    it('always stores user_id — every guardian points at a client account', function () {
+        // via app sign-up
+        $signUp = User::factory()->create();
+        // via the admin panel
+        actingAsAdmin(superAdmin());
+        Livewire::test(CreateGuardian::class)
+            ->fillForm(['name' => 'Panel Made', 'phone' => '+639172227777', 'password' => 'panelpass1'])
+            ->call('create')
+            ->assertHasNoFormErrors();
+
+        expect(Guardian::whereNull('user_id')->count())->toBe(0)
+            ->and($signUp->guardian->user_id)->toBe($signUp->id)
+            ->and(Guardian::where('phone', '+639172227777')->first()->user->phone_number)->toBe('+639172227777');
     });
 });
