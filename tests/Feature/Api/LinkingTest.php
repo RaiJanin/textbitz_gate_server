@@ -31,7 +31,14 @@ it('links a guardian to a student with a valid code', function () {
         ->assertJsonPath('student.id', $this->student->id);
 
     expect($this->user->fresh()->canViewStudent($this->student))->toBeTrue();
-    expect($code->fresh()->consumed_at)->not->toBeNull();
+
+    $code->refresh();
+    expect($code->consumed_at)->not->toBeNull()
+        // the consumer is the authenticated caller's guardian, so the server can
+        // always say who redeemed a code
+        ->and($code->consumed_by_guardian_id)->toBe($this->user->guardian->id)
+        ->and($code->consumedByGuardian->user->id)->toBe($this->user->id);
+
     Event::assertDispatched(GuardianLinkedToStudent::class);
 });
 

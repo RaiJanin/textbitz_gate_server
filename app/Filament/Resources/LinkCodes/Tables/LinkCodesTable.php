@@ -55,6 +55,15 @@ class LinkCodesTable
                 TextColumn::make('consumedByGuardian.name')
                     ->label('Redeemed by')
                     ->placeholder('—')
+                    ->description(fn (LinkCode $r) => $r->consumedByGuardian?->user?->phone_number
+                        ?? $r->consumedByGuardian?->phone)
+                    ->toggleable(),
+
+                TextColumn::make('consumed_at')
+                    ->label('Redeemed at')
+                    ->dateTime('M j, Y g:i A')
+                    ->placeholder('—')
+                    ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('expires_at')

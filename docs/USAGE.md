@@ -325,7 +325,7 @@ the **Linked children** panel to see or fix their links.
 | **Parent linked the wrong child** | *People → Guardians → open guardian → Linked children → Unlink*, then issue the correct code. |
 | **Gate shows Offline** | No heartbeat from that turnstile for several minutes — check the device and its ingest token. Regenerating a school's token invalidates every gate until each is updated. |
 | **App shows demo children on a real account** | Fixed automatically on login; if stuck, reinstall or clear the app's data. Turn off `APP_DEMO_MODE` for real use. |
-| **No notifications on the phone** | Allow notification permission (phone settings → app), keep at least one preference toggle on, and confirm FCM is configured on the server (SETUP.md). While the app is open, taps still appear live without push. |
+| **No notifications on the phone** | Open **Settings → Preferences** in the app — if the banner says notifications are off, tap **Open settings** (it takes you straight to the phone's notification screen for TextBitz Gate; if it can't, it shows the manual steps). Keep at least one preference toggle on, and confirm FCM is configured on the server (SETUP.md). While the app is open, taps still appear live without push. |
 | **App works but shows no data** | It needs one sync while online after linking. Open it with a connection; Home refreshes within a minute. |
 
 ---
