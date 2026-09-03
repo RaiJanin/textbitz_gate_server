@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Gate;
-use App\Models\Guardian;
 use App\Models\School;
 use App\Models\Student;
 use App\Models\TapEvent;
@@ -15,9 +14,8 @@ beforeEach(function () {
     $this->student = Student::factory()->for($this->school)->create();
     $this->otherStudent = Student::factory()->for($this->school)->create();
 
-    $this->user = User::factory()->create();
-    $guardian = Guardian::factory()->for($this->user)->create();
-    $guardian->students()->attach($this->student, ['relationship' => 'Dad']);
+    $this->user = User::factory()->create(); // UserObserver adds the guardian profile
+    $this->user->guardian->students()->attach($this->student, ['relationship' => 'Dad']);
 });
 
 it('returns today status with a derived presence state', function () {

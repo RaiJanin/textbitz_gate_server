@@ -10,9 +10,10 @@ Route::get('/', function () {
 
 /*
 | Printable guardian link-code slips, opened from the Filament admin panel.
-| Auth + admin check live in the controller.
+| The admin-guard + school-scope check lives in the controller (which 403s a
+| guest), so this only needs the session middleware.
 */
-Route::middleware(['web', 'auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware('web')->prefix('admin')->name('admin.')->group(function () {
     Route::get('link-codes/slips', [LinkCodeSlipController::class, 'batch'])->name('link-codes.slips');
     Route::get('link-codes/{linkCode}/slip', [LinkCodeSlipController::class, 'show'])->name('link-codes.slip');
 });

@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\NotificationPreference;
 use App\Models\User;
 use App\Rules\PhilippineMobileNumber;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -23,24 +21,14 @@ class AuthController extends Controller
             'device_name' => 'required|string',
         ]);
 
-        $user = DB::transaction(function () use ($validated) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'] ?? null,
-                'phone_number' => $validated['phone_number'],
-                'password' => Hash::make($validated['password']),
-            ]);
-
-            // Every new account is a guardian by default so the app has a
-            // profile + preferences to read immediately after sign-up.
-            $user->guardian()->create([
-                'name' => $user->name,
-                'phone' => $user->phone_number,
-            ]);
-            $user->preferencesFor(NotificationPreference::ROLE_GUARDIAN);
-
-            return $user;
-        });
+        // The UserObserver creates the matching Guardian profile + default
+        // notification preferences (see App\Support\GuardianAccount).
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'] ?? null,
+            'phone_number' => $validated['phone_number'],
+            'password' => Hash::make($validated['password']),
+        ]);
 
         return response()->json([
             'user' => $user,

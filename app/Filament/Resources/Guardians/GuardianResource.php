@@ -67,6 +67,7 @@ class GuardianResource extends Resource
     {
         return [
             'index' => ListGuardians::route('/'),
+            'create' => CreateGuardian::route('/create'),
             'edit' => EditGuardian::route('/{record}/edit'),
         ];
     }

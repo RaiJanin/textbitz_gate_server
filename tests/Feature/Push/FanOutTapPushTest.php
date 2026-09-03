@@ -3,7 +3,6 @@
 use App\Jobs\FanOutTapPush;
 use App\Jobs\SendPushNotification;
 use App\Models\Gate;
-use App\Models\Guardian;
 use App\Models\NotificationPreference;
 use App\Models\School;
 use App\Models\Student;
@@ -16,9 +15,8 @@ beforeEach(function () {
     $this->gate = Gate::factory()->for($this->school)->create();
     $this->student = Student::factory()->for($this->school)->create();
 
-    $this->guardianUser = User::factory()->create();
-    $guardian = Guardian::factory()->for($this->guardianUser)->create();
-    $guardian->students()->attach($this->student, ['relationship' => 'Mom']);
+    $this->guardianUser = User::factory()->create(); // UserObserver adds the guardian profile
+    $this->guardianUser->guardian->students()->attach($this->student, ['relationship' => 'Mom']);
 });
 
 function makeTap(string $direction = 'in', bool $late = false): TapEvent

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Auth\Login;
 use App\Filament\Widgets\AttendanceOverview;
 use App\Filament\Widgets\RecentTaps;
 use Filament\Http\Middleware\Authenticate;
@@ -29,7 +30,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->brandName('TextBitz Gate')
-            ->login()
+            ->login(Login::class)
+            ->authGuard('admin')
+            ->authPasswordBroker('admins')
             ->colors([
                 'primary' => Color::Blue,
             ])

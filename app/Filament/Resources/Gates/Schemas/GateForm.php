@@ -15,6 +15,13 @@ class GateForm
 
         return $schema
             ->components([
+                TextInput::make('id')
+                    ->label('Gate ID')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->visibleOn('edit')
+                    ->helperText('Configure the turnstile / bridge with this as its gate_id (with the school\'s ingest token).'),
+
                 Select::make('school_id')
                     ->label('School')
                     ->relationship('school', 'name')

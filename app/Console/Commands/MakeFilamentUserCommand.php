@@ -5,77 +5,114 @@ namespace App\Console\Commands;
 use App\Models\School;
 use App\Rules\PhilippineMobileNumber;
 use Filament\Commands\MakeUserCommand;
-use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputOption;
 
-use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
 /**
- * Overrides Filament's built-in `make:filament-user` so it also captures the
- * `phone_number` this app requires, and can flag the account as an admin and
- * scope it to a school in one go.
+ * Overrides Filament's built-in `make:filament-user` for the `x08` admin table.
+ * The panel logs in by **username** (`name`), so `name` is required + unique and
+ * `email` is optional. Also captures an optional phone and a school to scope to.
+ * (The panel's `admins` provider means the created model is App\Models\AdminUser.)
  */
 #[AsCommand(name: 'make:filament-user', aliases: ['filament:make-user', 'filament:user'])]
 class MakeFilamentUserCommand extends MakeUserCommand
 {
-    protected bool $shouldBeAdmin = true;
-
-    protected ?int $schoolId = null;
-
     protected function getOptions(): array
     {
         return [
             ...parent::getOptions(),
-            new InputOption('phone', null, InputOption::VALUE_REQUIRED, 'A valid, unique PH mobile number (+639XXXXXXXXX)'),
+            new InputOption('phone', null, InputOption::VALUE_REQUIRED, 'Optional PH mobile number (+639XXXXXXXXX)'),
             new InputOption('school', null, InputOption::VALUE_REQUIRED, 'School id to scope this admin to (omit for a super-admin)'),
-            new InputOption('no-admin', null, InputOption::VALUE_NONE, 'Create the account without admin-panel access'),
         ];
     }
 
     public function handle(): int
     {
-        // Validate a phone passed as an option up front so the failure is a clean
-        // message, not a DB integrity error mid-create.
-        if (($phone = $this->option('phone')) !== null && ($error = $this->phoneError($phone))) {
-            $this->components->error($error);
+        foreach ([
+            'name' => $this->nameError(...),
+            'email' => $this->emailError(...),
+            'phone' => $this->phoneError(...),
+        ] as $option => $validator) {
+            $value = $this->option($option);
 
-            return static::FAILURE;
+            if ($value !== null && ($error = $validator($value))) {
+                $this->components->error($error);
+
+                return static::FAILURE;
+            }
         }
 
         return parent::handle();
     }
 
-    protected function phoneError(string $value): ?string
+    protected function nameError(string $value): ?string
     {
-        return Validator::make(
-            ['phone_number' => $value],
-            ['phone_number' => ['required', new PhilippineMobileNumber, 'unique:users,phone_number']],
-        )->errors()->first('phone_number') ?: null;
+        return Validator::make(['name' => $value], ['name' => ['required', 'string', 'max:255', 'unique:x08,name']])
+            ->errors()->first('name') ?: null;
+    }
+
+    protected function emailError(?string $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        return Validator::make(['email' => $value], ['email' => ['email', 'max:255', 'unique:x08,email']])
+            ->errors()->first('email') ?: null;
+    }
+
+    protected function phoneError(?string $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        return Validator::make(['phone_number' => $value], ['phone_number' => [new PhilippineMobileNumber]])
+            ->errors()->first('phone_number') ?: null;
     }
 
     protected function getUserData(): array
     {
-        $data = parent::getUserData();
-
-        $data['phone_number'] = $this->option('phone') ?? text(
-            label: 'Phone number',
-            placeholder: '+639171234567',
+        $name = $this->options['name'] ?? text(
+            label: 'Username',
             required: true,
-            validate: fn (string $value): ?string => $this->phoneError($value),
+            validate: fn (string $value): ?string => $this->nameError($value),
         );
 
-        $this->shouldBeAdmin = ! $this->option('no-admin')
-            && ($this->option('name') !== null || confirm('Grant admin-panel access?', default: true));
+        $password = $this->options['password'] ?? password(label: 'Password', required: true);
 
-        if ($this->shouldBeAdmin) {
-            $this->schoolId = $this->resolveSchoolId();
-            $data['school_id'] = $this->schoolId;
+        $data = ['name' => $name, 'password' => Hash::make($password)];
+
+        $email = $this->options['email'];
+        if ($email === null && $this->input->isInteractive()) {
+            $email = text(
+                label: 'Email address (optional)',
+                validate: fn (?string $value): ?string => $this->emailError($value),
+            );
         }
+        if (filled($email)) {
+            $data['email'] = $email;
+        }
+
+        $phone = $this->option('phone');
+        if ($phone === null && $this->input->isInteractive()) {
+            $phone = text(
+                label: 'Phone number (optional)',
+                placeholder: '+639171234567',
+                validate: fn (?string $value): ?string => $this->phoneError($value),
+            );
+        }
+        if (filled($phone)) {
+            $data['phone_number'] = $phone;
+        }
+
+        $data['school_id'] = $this->resolveSchoolId();
 
         return $data;
     }
@@ -99,16 +136,5 @@ class MakeFilamentUserCommand extends MakeUserCommand
         );
 
         return $choice === '' ? null : (int) $choice;
-    }
-
-    protected function createUser(): Model&Authenticatable
-    {
-        $user = parent::createUser();
-
-        if ($this->shouldBeAdmin) {
-            $user->forceFill(['is_admin' => true])->save();
-        }
-
-        return $user;
     }
 }

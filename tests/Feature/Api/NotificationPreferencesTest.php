@@ -1,12 +1,10 @@
 <?php
 
-use App\Models\Guardian;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
 it('returns default preferences for a guardian account', function () {
-    $user = User::factory()->create();
-    Guardian::factory()->for($user)->create();
+    $user = User::factory()->create(); // UserObserver adds the guardian profile + prefs
 
     Sanctum::actingAs($user);
 
@@ -17,8 +15,7 @@ it('returns default preferences for a guardian account', function () {
 });
 
 it('updates a toggle for a role the account holds', function () {
-    $user = User::factory()->create();
-    Guardian::factory()->for($user)->create();
+    $user = User::factory()->create(); // UserObserver adds the guardian profile + prefs
 
     Sanctum::actingAs($user);
 
@@ -30,8 +27,7 @@ it('updates a toggle for a role the account holds', function () {
 });
 
 it('rejects updating a role the account does not hold', function () {
-    $user = User::factory()->create();
-    Guardian::factory()->for($user)->create();
+    $user = User::factory()->create(); // UserObserver adds the guardian profile + prefs
 
     Sanctum::actingAs($user);
 

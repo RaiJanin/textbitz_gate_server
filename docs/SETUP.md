@@ -80,7 +80,7 @@ Health check: `GET http://127.0.0.1:8004/api/health` → `{"alive":true}`.
 
 ---
 
-## 4. Server — seeded data & the demo account
+## 4. Server — seeded data
 
 `php artisan migrate --seed` (or `migrate:fresh --seed`) runs `DatabaseSeeder`, which
 creates:
@@ -88,12 +88,14 @@ creates:
 - **School** "Sampaguita National High School" (`Asia/Manila`, cutoff `07:45`) — prints its **ingest token** on run
 - **Gates** "Main Gate" (id 1) + "Side Gate"
 - **Students** Diana Reyes (`RFID-DIANA-01`), Marco Reyes (`RFID-MARCO-01`), Sofia Cruz, Liam Santos
-- **Guardian login** `+639171234567` / `password` — linked to Diana + Marco
-- **Student login** `+639170000002` / `password` — Marco's self-login
 - **Link code** `GATE-SOFIA` — a pending guardian↔student link for Sofia
 - ~3 weeks of weekday tap history for Diana + Marco (`seedTapHistory`, via `RecordTap::backfill`)
 
-The seeder echoes the ingest token, logins and link code — copy the token for §5/§6.
+The seeder echoes the ingest token and link code — copy the token for §5/§6.
+
+Local / staging runs (`APP_ENV` ≠ `production`) also get demo admin, guardian and
+student logins. **On production the seeder creates no accounts** — make the first
+admin with `php artisan make:filament-user`.
 
 ---
 
@@ -302,14 +304,13 @@ With `APP_DEMO_MODE=true`:
 
 `DemoSeeder` writes straight into the local SQLite cache (no server needed):
 
-- Guardian login **`09171234567` / `password`** (normalises to `+639171234567`)
+- A demo guardian account (the app shows its credentials hint on the login screen
+  when `VITE_APP_DEMO_MODE=true`)
 - Two children — **Diana Reyes** (punctual) and **Marco Reyes** (often late)
 - Two gates
 - **~35 weekdays** of on-time / late / absent tap history (per-child bias) so the
   History calendar colours in and the Alerts feed shows late / absent / weekly items
 - Default guardian notification preferences
-
-`LogIn.vue` shows the credentials hint when `VITE_APP_DEMO_MODE=true`.
 
 ---
 

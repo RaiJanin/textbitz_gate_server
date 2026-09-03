@@ -4,12 +4,9 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -17,9 +14,16 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'phone_number', 'password', 'school_id'])]
+/**
+ * A client-app account (guardian and/or student). Admin-panel staff live in the
+ * separate `x08` table (App\Models\AdminUser) — never here.
+ *
+ * Every User has exactly one Guardian profile, kept in sync by
+ * App\Support\GuardianAccount (see App\Observers\UserObserver).
+ */
+#[Fillable(['name', 'email', 'phone_number', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, HasApiTokens;
@@ -34,30 +38,7 @@ class User extends Authenticatable implements FilamentUser
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_admin' => 'boolean',
         ];
-    }
-
-    /**
-     * Only staff accounts flagged `is_admin` may open the Filament admin panel.
-     */
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return (bool) $this->is_admin;
-    }
-
-    /**
-     * A school-scoped admin only sees their own school; a super-admin
-     * (is_admin, no school) sees every school.
-     */
-    public function isSuperAdmin(): bool
-    {
-        return $this->is_admin && $this->school_id === null;
-    }
-
-    public function school(): BelongsTo
-    {
-        return $this->belongsTo(School::class);
     }
 
     public function guardian(): HasOne

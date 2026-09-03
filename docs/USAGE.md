@@ -32,34 +32,30 @@ The mobile app never talks to turnstile hardware — only to the server.
 ## 1.1 Signing in
 
 Open **`/admin`** on the server (e.g. `http://127.0.0.1:8004/admin`). Log in with
-a **phone number** (`+639XXXXXXXXX`) and password.
+**username and password** (the username is the account's `name`).
 
-Seeded logins after `php artisan migrate --seed`:
+Admin accounts are stored in their own table (`x08`) — completely separate from
+the client-app accounts in `users`. A staff member and a guardian are never the
+same login.
 
-| Login | Password | Scope |
-|---|---|---|
-| `+639170000900` (`admin@textbitzgate.test`) | `password` | **Super-admin** — every school |
-| `+639170000901` (`office-admin@textbitzgate.test`) | `password` | One school only (Sampaguita) |
-
-> Log in with the **phone number**, not the email — the email is only shown for
-> reference.
-
-### Creating more admins
+### Creating an admin
 
 ```bash
 php artisan make:filament-user \
-  --name="Front Office" --email="office@school.com" \
-  --password="secret123" --phone="+639171234567"
+  --name="frontoffice" --password="secret123" \
+  --phone="+639171234567" --school=1
 ```
 
 | Flag | Effect |
 |---|---|
-| *(none of the below)* | Super-admin — sees every school |
-| `--school=<id>` | Scopes the admin to that one school |
-| `--no-admin` | Creates the account **without** panel access (a plain app user) |
+| `--name` | Required — the **username** (must be unique) |
+| `--password` | Required |
+| `--email` | Optional — for records only, not used to log in |
+| `--phone` | Optional contact number (`+639XXXXXXXXX`) |
+| `--school=<id>` | Scopes the admin to that one school (omit ⇒ super-admin) |
 
 Run it with no flags to be prompted for each field, including a school picker.
-Phone numbers must be unique and in `+639XXXXXXXXX` form.
+Create the first super-admin this way right after deploying.
 
 ### Super-admin vs school-scoped
 
@@ -149,9 +145,21 @@ validity, without going through the roster.
 
 ## 1.5 Guardians  ·  *People → Guardians*
 
-Everyone who has (or will) receive alerts. Guardians appear here automatically
-when someone signs up in the app or redeems a code. Columns: name, phone,
-linked children, and whether they've installed the app yet.
+Everyone who has (or will) receive alerts. Columns: name, phone, linked children,
+and whether they've installed the app yet.
+
+**Guardian ⇄ app account are always paired:**
+
+- When a guardian **signs up in the app**, a Guardian row appears here
+  automatically (with default notification preferences).
+- When **you create a guardian here** (*New guardian*), the app **login is
+  created for them** — their mobile number is the username. Set an *App password*
+  in the form, or leave it blank to auto-generate one (shown in a toast after
+  saving, so you can pass it to the guardian).
+- If the mobile number already belongs to an app account, the form blocks it —
+  that person already has a guardian profile.
+
+Other actions:
 
 - **Edit** — fix a guardian's name / phone / email (support use)
 - **Linked children** panel on the edit page — **Link a student** (attach an
@@ -161,10 +169,15 @@ linked children, and whether they've installed the app yet.
 
 ## 1.6 Gates  ·  *Setup → Gates*
 
-Live health of each turnstile. **Online / Offline** is set automatically from
-turnstile heartbeats (a gate flips offline after a few minutes of silence — see
-`GATE_OFFLINE_AFTER_MINUTES` in SETUP.md). You can rename a gate or add one; you
-can't set the status by hand. The table auto-refreshes every 30 s.
+One row per turnstile. The **Gate ID** column (copyable) is what the turnstile /
+bridge is configured to send as `gate_id` — together with the school's ingest
+token it's all the hardware needs. Creating a gate shows its ID in a toast; it's
+also on the gate's edit page.
+
+**Online / Offline** is set automatically — a gate reads *Online* only while it's
+posting taps, and `attendance:sweep-gates` flips it *Offline* after a few minutes
+of silence (`GATE_OFFLINE_AFTER_MINUTES` in SETUP.md). You can rename or add a
+gate; you can't set the status by hand. The table auto-refreshes every 30 s.
 
 ## 1.7 Schools  ·  *Setup → Schools*  *(super-admin only)*
 
@@ -186,10 +199,15 @@ connection returns.
 ## 2.1 First run
 
 1. **Install** TextBitz Gate and open it.
-2. **Create an account** — name, phone number (`+639XXXXXXXXX`), password. (Or
-   **Log in** if you already have one.)
-3. The app asks for **notification permission** — allow it, or you won't get
-   attendance alerts. (You can change this later in the phone's app settings.)
+2. Sign in:
+   - **The school already created your account** → tap **Log in** with your
+     mobile number and the password the school gave you. The app fetches your
+     account from the server on that first login and works offline afterwards.
+   - **Otherwise** → **Create an account** (name, mobile number `+639XXXXXXXXX`,
+     password).
+3. A card appears explaining attendance alerts — tap **Enable notifications** and
+   allow the phone's permission prompt, or you won't get alerts. Tapped **Not
+   now**? You can turn them on later from **Settings → Preferences**.
 
 You land on **Home**, which is empty until you link a child.
 
@@ -268,14 +286,13 @@ apply locally now and sync later.
 
 ## 2.8 Demo mode
 
-If the app was built with `APP_DEMO_MODE=true`, the first launch seeds a demo
-guardian with two children and ~3 weeks of history so every screen has data:
+If the app was built with `APP_DEMO_MODE=true` (off by default), the first launch
+loads a self-contained demo dataset — a guardian with two children and a few
+weeks of history — so every screen has something to show without a server. The
+demo credentials are printed by the client seeder; see the client repo.
 
-| Login | Password |
-|---|---|
-| `+639171234567` | `password` |
-
-Logging into a **real** account clears the demo data automatically.
+Logging into a **real** account clears the demo data automatically. Leave
+`APP_DEMO_MODE` off for any real build.
 
 ---
 
@@ -302,7 +319,7 @@ the **Linked children** panel to see or fix their links.
 
 | Symptom | Fix |
 |---|---|
-| **Can't log into `/admin`** | The account needs `is_admin`. Use a seeded login, or `php artisan make:filament-user`. Log in with the **phone number**, not the email. |
+| **Can't log into `/admin`** | Admin accounts live in the `x08` table, not `users`, and sign in by **username** (the `name`). Create one with `php artisan make:filament-user`; on a fresh deploy there are none until you do. |
 | **A staff member sees no students / can't open Schools** | They're school-scoped and that's expected. A super-admin has no `school_id`. |
 | **"That link code is invalid or has expired"** in the app | The code was already redeemed, revoked, or past its expiry. Issue a fresh one from *People → Students → Issue code* (this also revokes any stale one). |
 | **Parent linked the wrong child** | *People → Guardians → open guardian → Linked children → Unlink*, then issue the correct code. |

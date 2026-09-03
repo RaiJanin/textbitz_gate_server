@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\AdminUser;
 use App\Models\Gate;
-use App\Models\Guardian;
 use App\Models\LinkCode;
 use App\Models\NotificationPreference;
 use App\Models\School;
@@ -13,6 +13,7 @@ use App\Models\TapEvent;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
@@ -34,26 +35,6 @@ class DatabaseSeeder extends Seeder
         $mainGate = Gate::create(['school_id' => $school->id, 'name' => 'Main Gate']);
         Gate::create(['school_id' => $school->id, 'name' => 'Side Gate']);
 
-        // Admin-panel logins (both password "password"): a super-admin that sees
-        // every school, and one scoped to this school only. `is_admin` is guarded,
-        // so it's force-filled rather than mass-assigned.
-        tap(User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@textbitzgate.test',
-            'phone_number' => '+639170000900',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-        ]), fn (User $u) => $u->forceFill(['is_admin' => true])->save());
-
-        tap(User::create([
-            'name' => 'Sampaguita Office',
-            'email' => 'office-admin@textbitzgate.test',
-            'phone_number' => '+639170000901',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-            'school_id' => $school->id,
-        ]), fn (User $u) => $u->forceFill(['is_admin' => true])->save());
-
         $students = collect([
             ['full_name' => 'Diana Reyes', 'grade' => '9', 'section' => 'Rizal', 'rfid_uid' => 'RFID-DIANA-01'],
             ['full_name' => 'Marco Reyes', 'grade' => '11', 'section' => 'Mabini', 'rfid_uid' => 'RFID-MARCO-01'],
@@ -61,40 +42,6 @@ class DatabaseSeeder extends Seeder
             ['full_name' => 'Liam Santos', 'grade' => '10', 'section' => 'Bonifacio', 'rfid_uid' => 'RFID-LIAM-01'],
         ])->map(fn (array $attributes) => Student::create([...$attributes, 'school_id' => $school->id]));
 
-        // Guardian account linked to the two "Reyes" students.
-        $guardianUser = User::create([
-            'name' => 'Elena Reyes',
-            'email' => 'parent@textbitzgate.test',
-            'phone_number' => '+639171234567',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-        ]);
-
-        $guardian = Guardian::create([
-            'user_id' => $guardianUser->id,
-            'name' => 'Elena Reyes',
-            'email' => 'parent@textbitzgate.test',
-            'phone' => '+639171234567',
-        ]);
-        $guardian->students()->attach([
-            $students[0]->id => ['relationship' => 'Mom'],
-            $students[1]->id => ['relationship' => 'Mom'],
-        ]);
-        $guardianUser->preferencesFor(NotificationPreference::ROLE_GUARDIAN);
-
-        // Student self-login for Marco (also reachable from the guardian account).
-        $studentUser = User::create([
-            'name' => 'Marco Reyes',
-            'email' => 'student@textbitzgate.test',
-            'phone_number' => '+639170000002',
-            'password' => Hash::make('password'),
-            'email_verified_at' => now(),
-        ]);
-        StudentAccount::create(['user_id' => $studentUser->id, 'student_id' => $students[1]->id]);
-        $studentUser->preferencesFor(NotificationPreference::ROLE_STUDENT);
-
-        // ~3 weeks of tap history for the two linked "Reyes" children so the
-        // demo account opens onto real timelines, calendars and alerts.
         $this->seedTapHistory($students[0], $mainGate, $school);
         $this->seedTapHistory($students[1], $mainGate, $school, Carbon::today($school->timezone)->subDays(7));
 
@@ -107,14 +54,69 @@ class DatabaseSeeder extends Seeder
             'expires_at' => now()->addDays(30),
         ]);
 
+        // Known-password admin / guardian / student logins are for local + staging
+        // only. On production, create admins with `php artisan make:filament-user`.
+        if (! app()->isProduction()) {
+            $this->seedDemoAccounts($school, $students);
+        }
+
         $this->command->info('── TextBitz Gate seed ───────────────────────────────');
         $this->command->info("School ingest token : {$ingestToken}");
         $this->command->info("Main gate id        : {$mainGate->id}");
         $this->command->info("Sample RFID UID     : {$students[0]->rfid_uid} (Diana Reyes)");
-        $this->command->info('Guardian login      : +639171234567 / password');
-        $this->command->info('Student login       : +639170000002 / password');
         $this->command->info("Pending link code   : {$linkCode->code} (Sofia Cruz)");
         $this->command->info('─────────────────────────────────────────────────────');
+    }
+
+    /**
+     * Demo admin-panel and client-app logins (all password "password"). Skipped
+     * when APP_ENV=production.
+     *
+     * @param  Collection<int, Student>  $students
+     */
+    private function seedDemoAccounts(School $school, Collection $students): void
+    {
+        AdminUser::create([
+            'name' => 'Super Admin',
+            'email' => 'admin@textbitzgate.test',
+            'phone_number' => '+639170000900',
+            'password' => Hash::make('password'),
+        ]);
+
+        AdminUser::create([
+            'name' => 'Sampaguita Office',
+            'email' => 'office-admin@textbitzgate.test',
+            'phone_number' => '+639170000901',
+            'password' => Hash::make('password'),
+            'school_id' => $school->id,
+        ]);
+
+        // Guardian account linked to the two "Reyes" students. The UserObserver
+        // creates the matching Guardian profile + guardian preferences.
+        $guardianUser = User::create([
+            'name' => 'Elena Reyes',
+            'email' => 'parent@textbitzgate.test',
+            'phone_number' => '+639171234567',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+        ]);
+
+        $guardianUser->guardian->students()->attach([
+            $students[0]->id => ['relationship' => 'Mom'],
+            $students[1]->id => ['relationship' => 'Mom'],
+        ]);
+
+        // Student self-login for Marco (also has a guardian profile like every
+        // client account; the StudentAccount adds the student role).
+        $studentUser = User::create([
+            'name' => 'Marco Reyes',
+            'email' => 'student@textbitzgate.test',
+            'phone_number' => '+639170000002',
+            'password' => Hash::make('password'),
+            'email_verified_at' => now(),
+        ]);
+        StudentAccount::create(['user_id' => $studentUser->id, 'student_id' => $students[1]->id]);
+        $studentUser->preferencesFor(NotificationPreference::ROLE_STUDENT);
     }
 
     /**

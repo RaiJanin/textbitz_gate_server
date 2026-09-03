@@ -17,6 +17,15 @@ class GatesTable
 
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label('Gate ID')
+                    ->badge()
+                    ->color('gray')
+                    ->copyable()
+                    ->copyMessage('Gate ID copied')
+                    ->sortable()
+                    ->tooltip('Configure the turnstile / bridge with this as its gate_id'),
+
                 TextColumn::make('name')->searchable()->sortable()->weight('bold'),
 
                 TextColumn::make('school.name')

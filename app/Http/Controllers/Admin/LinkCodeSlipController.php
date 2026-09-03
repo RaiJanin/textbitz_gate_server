@@ -46,16 +46,16 @@ class LinkCodeSlipController extends Controller
      */
     protected function authorizeAccess(Request $request, Collection $codes): void
     {
-        $user = $request->user();
+        $admin = $request->user('admin');
 
-        abort_unless($user && $user->is_admin, 403);
+        abort_unless($admin !== null, 403);
 
-        if ($user->isSuperAdmin()) {
+        if ($admin->isSuperAdmin()) {
             return;
         }
 
         abort_unless(
-            $codes->every(fn (LinkCode $c) => $c->school_id === $user->school_id),
+            $codes->every(fn (LinkCode $c) => $c->school_id === $admin->school_id),
             403,
         );
     }
