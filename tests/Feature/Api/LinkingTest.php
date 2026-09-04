@@ -68,3 +68,73 @@ it('rejects an already consumed code', function () {
     $this->postJson('/api/link/request', ['code' => 'GATE-USEDUP'])
         ->assertStatus(422);
 });
+
+it('applies the relationship from the link request and syncs the guardian default', function () {
+    Sanctum::actingAs($this->user);
+
+    LinkCode::factory()->create([
+        'school_id' => $this->school->id,
+        'student_id' => $this->student->id,
+        'code' => 'GATE-REL01',
+    ]);
+
+    $this->postJson('/api/link/request', ['code' => 'GATE-REL01', 'relationship' => 'Parent'])
+        ->assertCreated()
+        ->assertJsonPath('student.relationship', 'Parent');
+
+    expect($this->user->guardian->fresh()->role)->toBe('Parent')
+        ->and($this->user->guardian->students()->find($this->student->id)->pivot->relationship)->toBe('Parent');
+});
+
+it('defaults the link relationship to the guardian role', function () {
+    Sanctum::actingAs($this->user);
+    $this->user->guardian->update(['role' => 'Parent']);
+
+    LinkCode::factory()->create([
+        'school_id' => $this->school->id,
+        'student_id' => $this->student->id,
+        'code' => 'GATE-REL02',
+    ]);
+
+    $this->postJson('/api/link/request', ['code' => 'GATE-REL02'])
+        ->assertCreated()
+        ->assertJsonPath('student.relationship', 'Parent');
+});
+
+it('rejects a relationship outside the Parent/Guardian enum', function () {
+    Sanctum::actingAs($this->user);
+    LinkCode::factory()->create([
+        'school_id' => $this->school->id, 'student_id' => $this->student->id, 'code' => 'GATE-REL03',
+    ]);
+
+    $this->postJson('/api/link/request', ['code' => 'GATE-REL03', 'relationship' => 'Auntie'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('relationship');
+});
+
+it('updates the per-student relationship without touching the guardian default', function () {
+    Sanctum::actingAs($this->user);
+    $this->user->guardian->students()->attach($this->student, ['relationship' => 'Guardian']);
+
+    $this->putJson("/api/students/{$this->student->id}/relationship", ['relationship' => 'Parent'])
+        ->assertOk()
+        ->assertJsonPath('student.relationship', 'Parent');
+
+    expect($this->user->guardian->students()->find($this->student->id)->pivot->relationship)->toBe('Parent')
+        ->and($this->user->guardian->fresh()->role)->toBe('Guardian'); // default unchanged
+});
+
+it('forbids changing the relationship for an unlinked student', function () {
+    Sanctum::actingAs($this->user);
+    $other = Student::factory()->for($this->school)->create();
+
+    $this->putJson("/api/students/{$other->id}/relationship", ['relationship' => 'Parent'])
+        ->assertForbidden();
+});
+
+it('exposes the guardian role through /api/me', function () {
+    Sanctum::actingAs($this->user);
+    $this->user->guardian->update(['role' => 'Parent']);
+
+    $this->getJson('/api/me')->assertOk()->assertJsonPath('guardian.role', 'Parent');
+});

@@ -75,11 +75,11 @@ describe('IssueLinkCode', function () {
     it('mints a usable code scoped to the student school', function () {
         $student = Student::factory()->create();
 
-        $code = IssueLinkCode::run($student, 'Mom', 14);
+        $code = IssueLinkCode::run($student, 'Parent', 14);
 
         expect($code->student_id)->toBe($student->id)
             ->and($code->school_id)->toBe($student->school_id)
-            ->and($code->default_relationship)->toBe('Mom')
+            ->and($code->default_relationship)->toBe('Parent')
             ->and($code->isUsable())->toBeTrue()
             ->and($code->status)->toBe('usable');
     });
@@ -117,10 +117,10 @@ it('issues a code from the students table row action', function () {
     $student = Student::factory()->create();
 
     Livewire::test(ListStudents::class)
-        ->callTableAction('issueLinkCode', $student, data: ['relationship' => 'Dad', 'valid_for_days' => 20])
+        ->callTableAction('issueLinkCode', $student, data: ['relationship' => 'Parent', 'valid_for_days' => 20])
         ->assertHasNoTableActionErrors();
 
-    expect($student->linkCodes()->usable()->first()?->default_relationship)->toBe('Dad');
+    expect($student->linkCodes()->usable()->first()?->default_relationship)->toBe('Parent');
 });
 
 describe('link-code slips', function () {

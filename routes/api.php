@@ -41,6 +41,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/students/{student}/status', [StudentController::class, 'status'])->can('view', 'student');
     Route::get('/students/{student}/history', [StudentController::class, 'history'])->can('view', 'student');
     Route::get('/students/{student}/alerts', [StudentController::class, 'alerts'])->can('view', 'student');
+    Route::put('/students/{student}/relationship', [LinkController::class, 'updateRelationship'])->can('view', 'student');
 
     Route::get('/notification-preferences', [NotificationPreferenceController::class, 'index']);
     Route::put('/notification-preferences', [NotificationPreferenceController::class, 'update']);

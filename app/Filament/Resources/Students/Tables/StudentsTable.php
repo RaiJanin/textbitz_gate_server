@@ -30,10 +30,11 @@ class StudentsTable
     protected static function issueForm(): array
     {
         return [
-            TextInput::make('relationship')
+            \Filament\Forms\Components\Select::make('relationship')
                 ->label('Relationship shown to the guardian')
-                ->default('Guardian')
-                ->maxLength(40),
+                ->options(array_combine(\App\Support\Relationship::VALUES, \App\Support\Relationship::VALUES))
+                ->default(\App\Support\Relationship::DEFAULT)
+                ->required(),
             TextInput::make('valid_for_days')
                 ->label('Valid for (days)')
                 ->numeric()

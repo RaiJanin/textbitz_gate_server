@@ -31,10 +31,11 @@ class LinkCodeForm
                         fn (Student $s) => trim($s->full_name.' — '.collect([$s->grade, $s->section])->filter()->join(' ')),
                     ),
 
-                TextInput::make('default_relationship')
+                Select::make('default_relationship')
                     ->label('Relationship shown to the guardian')
-                    ->default('Guardian')
-                    ->maxLength(40),
+                    ->options(array_combine(\App\Support\Relationship::VALUES, \App\Support\Relationship::VALUES))
+                    ->default(\App\Support\Relationship::DEFAULT)
+                    ->required(),
 
                 TextInput::make('valid_for_days')
                     ->label('Valid for (days)')

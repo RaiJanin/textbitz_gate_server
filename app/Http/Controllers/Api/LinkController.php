@@ -6,9 +6,12 @@ use App\Events\GuardianLinkedToStudent;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StudentResource;
 use App\Models\LinkCode;
+use App\Models\Student;
+use App\Support\Relationship;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class LinkController extends Controller
 {
@@ -20,7 +23,7 @@ class LinkController extends Controller
     {
         $validated = $request->validate([
             'code' => 'required|string',
-            'relationship' => 'sometimes|string|max:40',
+            'relationship' => ['sometimes', 'nullable', Rule::in(Relationship::VALUES)],
         ]);
 
         $user = $request->user();
@@ -42,14 +45,19 @@ class LinkController extends Controller
             ], 422);
         }
 
-        $relationship = $validated['relationship']
+        $relationship = Relationship::normalize(
+            $validated['relationship']
+            ?? $guardian->role
             ?? $linkCode->default_relationship
-            ?? 'Guardian';
+        );
 
         DB::transaction(function () use ($guardian, $linkCode, $relationship) {
             $guardian->students()->syncWithoutDetaching([
                 $linkCode->student_id => ['relationship' => $relationship],
             ]);
+
+            // Keep the guardian's default in step with their latest choice.
+            $guardian->forceFill(['role' => $relationship])->save();
 
             $linkCode->forceFill([
                 'consumed_at' => now(),
@@ -64,11 +72,37 @@ class LinkController extends Controller
 
         GuardianLinkedToStudent::dispatch($guardian, $linkCode->student);
 
-        $linkCode->student->loadMissing('school');
+        $linked = $guardian->students()->with('school')->find($linkCode->student_id);
 
         return response()->json([
             'linked' => true,
-            'student' => new StudentResource($linkCode->student),
+            'student' => new StudentResource($linked),
         ], 201);
+    }
+
+    /**
+     * Change the caller's relationship to a student they're already linked to
+     * (per-student override — does not touch the guardian's default `role`).
+     */
+    public function updateRelationship(Request $request, Student $student): JsonResponse
+    {
+        $validated = $request->validate([
+            'relationship' => ['required', Rule::in(Relationship::VALUES)],
+        ]);
+
+        $guardian = $request->user()->guardian;
+
+        abort_unless($guardian && $guardian->students()->whereKey($student->id)->exists(), 403);
+
+        $guardian->students()->updateExistingPivot($student->id, [
+            'relationship' => $validated['relationship'],
+        ]);
+
+        $updated = $guardian->students()->with('school')->find($student->id);
+
+        return response()->json([
+            'updated' => true,
+            'student' => new StudentResource($updated),
+        ]);
     }
 }

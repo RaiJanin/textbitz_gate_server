@@ -27,6 +27,7 @@ class MeController extends Controller
                 'name' => $user->guardian->name,
                 'email' => $user->guardian->email,
                 'phone' => $user->guardian->phone,
+                'role' => $user->guardian->role, // default relationship: 'Parent' | 'Guardian'
                 'students' => StudentResource::collection($user->guardian->students),
             ] : null,
             'student' => $user->studentAccount?->student ? [

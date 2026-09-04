@@ -101,9 +101,10 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        $guardianUser->guardian->update(['role' => 'Parent']);
         $guardianUser->guardian->students()->attach([
-            $students[0]->id => ['relationship' => 'Mom'],
-            $students[1]->id => ['relationship' => 'Mom'],
+            $students[0]->id => ['relationship' => 'Parent'],
+            $students[1]->id => ['relationship' => 'Parent'],
         ]);
 
         // Student self-login for Marco (also has a guardian profile like every

@@ -19,9 +19,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  * `password` is a write-only virtual attribute: set it on create to choose the
  * login password for the paired User; it is never a column here.
  */
-#[Fillable(['user_id', 'name', 'email', 'phone', 'password'])]
+#[Fillable(['user_id', 'name', 'email', 'phone', 'role', 'password'])]
 class Guardian extends Model
 {
+    protected $attributes = [
+        'role' => \App\Support\Relationship::DEFAULT,
+    ];
+
     /** Plaintext password captured from a form, consumed by GuardianAccount. */
     protected ?string $plainPassword = null;
 

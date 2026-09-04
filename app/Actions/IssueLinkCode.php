@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\LinkCode;
 use App\Models\Student;
+use App\Support\Relationship;
 
 /**
  * Issues (and revokes) the school-authorised codes a guardian redeems in the
@@ -16,7 +17,7 @@ class IssueLinkCode
      * Mint a fresh code for a student. Any earlier still-usable code for the
      * same student is expired first, so only one code is ever live per student.
      */
-    public static function run(Student $student, string $relationship = 'Guardian', int $validForDays = 30): LinkCode
+    public static function run(Student $student, string $relationship = Relationship::DEFAULT, int $validForDays = 30): LinkCode
     {
         LinkCode::query()
             ->where('student_id', $student->id)
@@ -26,7 +27,7 @@ class IssueLinkCode
         return LinkCode::create([
             'school_id' => $student->school_id,
             'student_id' => $student->id,
-            'default_relationship' => trim($relationship) ?: null,
+            'default_relationship' => Relationship::normalize($relationship),
             'expires_at' => $validForDays > 0 ? now()->addDays($validForDays) : null,
         ]);
     }
