@@ -92,92 +92,89 @@
     .tbg .hero{padding-top:32px}
     }
     </style>
-
     <div>
-    <input class="dk" type="checkbox" id="tbg-dark" aria-label="Dark mode">
-
-    <header class="top">
-        <a class="logo" href="./">
-        <i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i>
-        TextBitz Gate
-        </a>
-        <div class="acts">
-        <label class="mode" for="tbg-dark" title="Toggle dark mode">
-            <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
-            <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-        </label>
-        <!-- Change href to your real admin login URL -->
-        <a class="admin" href="/admin/login">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-        Admin sign in
-        </a>
-        </div>
-    </header>
-
-    <div class="hero">
-        <h1>See how TextBitz Gate works</h1>
-        <p class="lead">Every tap on the school turnstile becomes a notification on a parent's phone.</p>
-        <span class="live"><i></i>Live at a partner school</span>
-    </div>
-
-    <div class="stage">
-        <div>
-        <div class="copy">
-            <h2>Parents see every tap as it happens</h2>
-            <ul>
-            <li><b>A notification when a child enters or leaves</b>It appears on the phone within moments of the tap.</li>
-            <li><b>All children in one account</b>Switch between them with a single tap.</li>
-            <li><b>A timeline of the day</b>Review every arrival and departure in one list.</li>
-            </ul>
-        </div>
-        </div>
-
-        <div class="phone" role="img" aria-label="Mockup of the TextBitz Gate mobile app home screen">
-        <div class="scr">
-            <div class="hdr">
-            <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg></i>
-            <div><b>TextBitz Gate</b><small>Attendance alerts</small></div>
+        <input class="dk" type="checkbox" id="tbg-dark" aria-label="Dark mode">
+        <header class="top">
+            <a class="logo" href="./">
+                <i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></i>
+                TextBitz Gate
+            </a>
+            <div class="acts">
+                <label class="mode" for="tbg-dark" title="Toggle dark mode">
+                    <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+                    <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+                </label>
+                <!-- Change href to your real admin login URL -->
+                @auth
+                <a class="admin" href="/admin">
+                @else
+                <a class="admin" href="/admin/login">
+                @endauth
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    Admin sign in
+                </a>
             </div>
-            <div class="body">
-            <div class="banner">
-                <div>
-                <h3>Hello Ana</h3>
-                <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Live updates</span>
-                <p>Mia is on campus</p>
-                <small>Entered at 7:42 AM</small>
-                <span class="go">View today</span>
+        </header>
+        <div class="hero">
+            <h1>See how TextBitz Gate works</h1>
+            <p class="lead">Every tap on the school turnstile becomes a notification on a parent's phone.</p>
+            <span class="live"><i></i>Live at a partner school</span>
+        </div>
+        <div class="stage">
+            <div>
+                <div class="copy">
+                    <h2>Parents see every tap as it happens</h2>
+                    <ul>
+                        <li><b>A notification when a child enters or leaves</b>It appears on the phone within moments of the tap.</li>
+                        <li><b>All children in one account</b>Switch between them with a single tap.</li>
+                        <li><b>A timeline of the day</b>Review every arrival and departure in one list.</li>
+                    </ul>
                 </div>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
             </div>
-            <div class="sec"><span>Recent activity</span><em>See all</em></div>
-            <div class="items">
-                <div class="item in"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Mia entered campus</p><small>Turnstile 2 · 7:42 AM</small></div></div>
-                <div class="item in"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Leo entered campus</p><small>Turnstile 1 · 7:31 AM</small></div></div>
-                <div class="item out"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Mia left campus</p><small>Yesterday · 4:58 PM</small></div></div>
-            </div>
-            </div>
-            <div class="nav">
-            <span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg></span>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span>
-            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+            <div class="phone" role="img" aria-label="Mockup of the TextBitz Gate mobile app home screen">
+                <div class="scr">
+                    <div class="hdr">
+                        <i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg></i>
+                        <div><b>TextBitz Gate</b><small>Attendance alerts</small></div>
+                    </div>
+                    <div class="body">
+                        <div class="banner">
+                            <div>
+                            <h3>Hello Ana</h3>
+                            <span class="pill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>Live updates</span>
+                            <p>Mia is on campus</p>
+                            <small>Entered at 7:42 AM</small>
+                            <span class="go">View today</span>
+                            </div>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+                        </div>
+                        <div class="sec"><span>Recent activity</span><em>See all</em></div>
+                        <div class="items">
+                            <div class="item in"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Mia entered campus</p><small>Turnstile 2 · 7:42 AM</small></div></div>
+                            <div class="item in"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Leo entered campus</p><small>Turnstile 1 · 7:31 AM</small></div></div>
+                            <div class="item out"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" fill="currentColor"/></svg><div><p>Mia left campus</p><small>Yesterday · 4:58 PM</small></div></div>
+                        </div>
+                    </div>
+                    <div class="nav">
+                        <span class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg></span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/></svg></span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg></span>
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></span>
+                    </div>
+                </div>
             </div>
         </div>
+        <div class="flow">
+            <h2>From turnstile to phone</h2>
+            <p class="sub">The school keeps the hardware and the data. The app only shows what the school server sends.</p>
+            <div class="steps">
+                <div class="step"><h3>A student taps in</h3><p>The RFID card is read at the turnstile on the way in or out.</p></div>
+                <div class="step"><h3>The school server records it</h3><p>Each school runs its own server, which receives every tap.</p></div>
+                <div class="step"><h3>The app notifies the family</h3><p>The server pushes the update and the phone shows a notification.</p></div>
+            </div>
+            <p class="note"><b>No Firebase needed.</b> Alerts use on-device notifications. A recurring background check also catches any update a live connection missed.</p>
         </div>
     </div>
-
-    <div class="flow">
-        <h2>From turnstile to phone</h2>
-        <p class="sub">The school keeps the hardware and the data. The app only shows what the school server sends.</p>
-        <div class="steps">
-        <div class="step"><h3>A student taps in</h3><p>The RFID card is read at the turnstile on the way in or out.</p></div>
-        <div class="step"><h3>The school server records it</h3><p>Each school runs its own server, which receives every tap.</p></div>
-        <div class="step"><h3>The app notifies the family</h3><p>The server pushes the update and the phone shows a notification.</p></div>
-        </div>
-        <p class="note"><b>No Firebase needed.</b> Alerts use on-device notifications. A recurring background check also catches any update a live connection missed.</p>
-    </div>
-    </div>
-
     <script>
     /* Remembers the dark mode choice; without this script the toggle still works but resets on reload */
     (function(){var c=document.getElementById('tbg-dark');if(!c)return;try{var v=localStorage.getItem('tbg-dark');c.checked=v?v==='1':matchMedia('(prefers-color-scheme: dark)').matches;c.addEventListener('change',function(){localStorage.setItem('tbg-dark',c.checked?'1':'0')})}catch(e){}})();
