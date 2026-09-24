@@ -56,7 +56,6 @@ class LinkController extends Controller
                 $linkCode->student_id => ['relationship' => $relationship],
             ]);
 
-            // Keep the guardian's default in step with their latest choice.
             $guardian->forceFill(['role' => $relationship])->save();
 
             $linkCode->forceFill([

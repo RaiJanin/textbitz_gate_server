@@ -74,7 +74,6 @@ class RecordTap
             'student_id' => $student->id,
             'gate_id' => $gate->id,
             'direction' => $direction,
-            // Persist the instant in UTC; readers convert to the school's tz.
             'tapped_at' => $tappedAt->copy()->utc(),
             'is_late' => $isLate,
             'source' => $source,

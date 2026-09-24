@@ -52,7 +52,6 @@ class TurnstileSimulator
                 $counts[$roll === 'late' ? 'late' : 'on_time']++;
                 $counts['taps']++;
 
-                // Everyone leaves on past days; today's cohort is still at school.
                 if (! $isToday) {
                     $leaveAt = $day->copy()->setTime(15, mt_rand(0, 45));
                     $this->recordTap->backfill($student, $gate, $leaveAt, forceDirection: TapEvent::DIRECTION_OUT);

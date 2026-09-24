@@ -53,4 +53,11 @@ class Guardian extends Model
             ->withPivot('relationship')
             ->withTimestamps();
     }
+
+    protected static function booted(): void
+    {
+        static::deleted(function (Guardian $guardian) {
+            $guardian->user?->delete();
+        });
+    }
 }

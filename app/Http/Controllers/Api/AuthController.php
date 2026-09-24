@@ -21,8 +21,6 @@ class AuthController extends Controller
             'device_name' => 'required|string',
         ]);
 
-        // The UserObserver creates the matching Guardian profile + default
-        // notification preferences (see App\Support\GuardianAccount).
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'] ?? null,

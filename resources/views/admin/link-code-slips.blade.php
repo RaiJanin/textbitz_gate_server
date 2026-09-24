@@ -34,7 +34,7 @@
         .slip__school { color: #475569; font-size: 14px; margin-bottom: 24px; }
         .slip__grid { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; }
         .slip__qr { width: 168px; height: 168px; flex: none; border: 1px solid #e2e8f0; border-radius: 12px; padding: 8px; }
-        .slip__qr svg { width: 100%; height: 100%; display: block; }
+        .slip__qr img { width: 100%; height: 100%; display: block; }
         .slip__for { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #64748b; }
         .slip__student { font-size: 19px; font-weight: 700; margin: 2px 0 14px; }
         .slip__code {
@@ -68,7 +68,9 @@
             <div class="slip__school">{{ $code->student?->school?->name ?? 'Your school' }}</div>
 
             <div class="slip__grid">
-                <div class="slip__qr">{!! LinkCodeSlipController::qrDataUri($code->code) !!}</div>
+                <div class="slip__qr">
+                    <img src="{{ LinkCodeSlipController::qrDataUri($code->code) }}" alt="QR code for {{ $code->code }}">
+                </div>
                 <div>
                     <div class="slip__for">Link code for</div>
                     <div class="slip__student">{{ $code->student?->full_name ?? 'your child' }}</div>

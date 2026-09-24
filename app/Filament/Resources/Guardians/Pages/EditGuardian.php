@@ -13,7 +13,8 @@ class EditGuardian extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->modalDescription("This also deletes the guardian's app account. This can't be undone."),
         ];
     }
 }

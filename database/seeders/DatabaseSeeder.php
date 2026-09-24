@@ -45,7 +45,6 @@ class DatabaseSeeder extends Seeder
         $this->seedTapHistory($students[0], $mainGate, $school);
         $this->seedTapHistory($students[1], $mainGate, $school, Carbon::today($school->timezone)->subDays(7));
 
-        // A pending school-issued link code for Sofia Cruz.
         $linkCode = LinkCode::create([
             'school_id' => $school->id,
             'student_id' => $students[2]->id,
@@ -54,8 +53,6 @@ class DatabaseSeeder extends Seeder
             'expires_at' => now()->addDays(30),
         ]);
 
-        // Known-password admin / guardian / student logins are for local + staging
-        // only. On production, create admins with `php artisan make:filament-user`.
         if (! app()->isProduction()) {
             $this->seedDemoAccounts($school, $students);
         }
@@ -91,8 +88,6 @@ class DatabaseSeeder extends Seeder
             'school_id' => $school->id,
         ]);
 
-        // Guardian account linked to the two "Reyes" students. The UserObserver
-        // creates the matching Guardian profile + guardian preferences.
         $guardianUser = User::create([
             'name' => 'Elena Reyes',
             'email' => 'parent@textbitzgate.test',
@@ -107,8 +102,6 @@ class DatabaseSeeder extends Seeder
             $students[1]->id => ['relationship' => 'Parent'],
         ]);
 
-        // Student self-login for Marco (also has a guardian profile like every
-        // client account; the StudentAccount adds the student role).
         $studentUser = User::create([
             'name' => 'Marco Reyes',
             'email' => 'student@textbitzgate.test',

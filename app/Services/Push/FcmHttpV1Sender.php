@@ -81,8 +81,6 @@ class FcmHttpV1Sender implements PushSender
         return Cache::remember('fcm:access_token', now()->addMinutes(50), function () {
             $configured = (string) config('services.fcm.credentials');
 
-            // Accept an absolute path (Docker: /app/credentials/...) or one
-            // relative to the project root (local dev).
             $credentialsPath = is_file($configured)
                 ? $configured
                 : base_path($configured);

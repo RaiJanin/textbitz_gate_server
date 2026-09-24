@@ -32,5 +32,6 @@ class AppServiceProvider extends ServiceProvider
     {
         User::observe(UserObserver::class);
         Guardian::observe(GuardianObserver::class);
+        if(app()->isProduction()) { \Illuminate\Support\Facades\URL::forceScheme('https'); }
     }
 }
